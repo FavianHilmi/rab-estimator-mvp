@@ -109,7 +109,6 @@ export class MasterController {
     @Query('overhead') overheadStr: string,
     @Query('bumdesUuid') bumdesUuid?: string,
   ) {
-    onlySuper(u);
     const p = await this.db.masterPekerjaan.findUnique({ where: { uuid } });
     if (!p) throw new NotFoundException('Pekerjaan tidak ditemukan');
     const bumdesId = await bumdesIdFor(this.db, u, bumdesUuid);

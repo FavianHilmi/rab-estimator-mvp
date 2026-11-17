@@ -65,6 +65,7 @@ export default function RabDetail() {
   const [selectedPkUuid, setSelectedPkUuid] = React.useState<string>('');
   const [pkDetail, setPkDetail] = React.useState<any>(null);
   const [pkPreview, setPkPreview] = React.useState<any>(null);
+  const [pkPreviewErr, setPkPreviewErr] = React.useState('');
   const [loadingDetail, setLoadingDetail] = React.useState(false);
   const [itemVolume, setItemVolume] = React.useState('');
   const [addingItem, setAddingItem] = React.useState(false);
@@ -94,6 +95,8 @@ export default function RabDetail() {
 
     let isMounted = true;
     setLoadingDetail(true);
+    setPkPreview(null);
+    setPkPreviewErr('');
 
     const fetchItemInfo = async () => {
       try {
@@ -108,10 +111,15 @@ export default function RabDetail() {
         let preview = previewCache.current[selectedPkUuid];
         if (!preview) {
           const bumdesQuery = d.proyek.bumdes?.uuid ? `&bumdesUuid=${d.proyek.bumdes.uuid}` : '';
+          let errMsg = '';
           preview = await api(
             `/pekerjaan/${selectedPkUuid}/hitung?tahun=${d.proyek.tahun}&overhead=${d.proyek.overheadPersen}${bumdesQuery}`
-          ).catch(() => null);
-          previewCache.current[selectedPkUuid] = preview;
+          ).catch((e) => {
+            errMsg = e?.message || 'Estimasi harga tidak dapat dihitung';
+            return null;
+          });
+          if (preview) previewCache.current[selectedPkUuid] = preview;
+          else if (isMounted) setPkPreviewErr(errMsg);
         }
 
         if (isMounted) {
@@ -952,6 +960,12 @@ export default function RabDetail() {
                             <span className="num font-bold text-xs text-primary">Rp {rp(pkPreview.f)}</span>
                           </div>
                         </div>
+                      </div>
+                    )}
+
+                    {!pkPreview && !loadingDetail && pkPreviewErr && (
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                        Estimasi harga belum dapat ditampilkan: {pkPreviewErr}
                       </div>
                     )}
 
