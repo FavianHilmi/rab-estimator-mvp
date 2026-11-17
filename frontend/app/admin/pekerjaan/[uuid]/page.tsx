@@ -404,7 +404,7 @@ export default function DetailPekerjaan() {
           </CardContent>
         </Card>
 
-        {/* Calculation Preview (D, E, F) (Design System 6.6) */}
+        {/* Pratinjau Perhitungan (D, E, F) */}
         <Card className="border-border bg-card shadow-sm">
           <CardHeader className="pb-3 border-b border-border bg-muted/20">
             <CardTitle className="text-base font-semibold">Pratinjau Perhitungan Harga Satuan</CardTitle>

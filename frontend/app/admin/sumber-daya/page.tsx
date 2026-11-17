@@ -93,7 +93,7 @@ export default function SumberDayaPage() {
           </Alert>
         )}
 
-        {/* Add Resource Form (Design System 6.7) */}
+        {/* Tambah Sumber Daya Baru */}
         <Card className="border-border bg-card shadow-sm">
           <CardHeader className="pb-3 border-b border-border bg-muted/20">
             <CardTitle className="text-base font-semibold">Tambah Sumber Daya Baru</CardTitle>

@@ -82,7 +82,7 @@ export default function MasterPekerjaan() {
             Master Pekerjaan (AHSP)
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Standar Analisis Harga Satuan Pekerjaan dan aturan pembulatan kategori (PRD C6)
+            Standar Analisis Harga Satuan Pekerjaan dan aturan pembulatan per kategori pekerjaan
           </p>
         </div>
 
@@ -93,11 +93,11 @@ export default function MasterPekerjaan() {
           </Alert>
         )}
 
-        {/* Categories & Rounding Rules (PRD C6) */}
+        {/* Kategori & Aturan Pembulatan */}
         <Card className="border-border bg-card shadow-sm">
           <CardHeader className="pb-3 border-b border-border bg-muted/20">
             <CardTitle className="text-base font-semibold">
-              Kategori & Aturan Pembulatan (PRD C6)
+              Kategori & Aturan Pembulatan
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-4">

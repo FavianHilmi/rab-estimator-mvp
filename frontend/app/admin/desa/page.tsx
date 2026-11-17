@@ -80,7 +80,7 @@ export default function DesaPage() {
             Desa, BUMDes & Pengguna
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pengaturan unit BUMDes dan hak akses pengguna sistem (Design System 6.8)
+            Pengaturan unit BUMDes dan hak akses pengguna sistem
           </p>
         </div>
 
@@ -91,7 +91,7 @@ export default function DesaPage() {
           </Alert>
         )}
 
-        {/* Tab Switcher (Design System 6.8) */}
+        {/* Tab Switcher */}
         <div className="inline-flex rounded-lg border border-border p-1 bg-muted/40">
           <button
             type="button"
