@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Bumdes {
+  id        Int    @id @default(autoincrement())
+  uuid      String @unique @default(uuid())
+  kode      String @unique
+  nama      String
+  desa      String
+  kecamatan String
+  users       User[]
+  hargaLokal  HargaLokal[]
+  proyek      RabProyek[]
+  @@map("bumdes")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  uuid     String @unique @default(uuid())
+  bumdesId Int?   @map("bumdes_id")
+  nama     String
+  email    String @unique
+  password String
+  role     String // superadmin | operator | viewer
+  bumdes   Bumdes? @relation(fields: [bumdesId], references: [id])
+  @@map("users")
+}
+
+model MasterKategori {
+  id         Int               @id @default(autoincrement())
+  uuid       String            @unique @default(uuid())
+  kode       String            @unique
+  nama       String
+  pembulatan String            @default("down_0") // none | down_0
+  pekerjaan  MasterPekerjaan[]
+
+  @@map("master_kategori")
+}
+
+model MasterPekerjaan {
+  id            Int               @id @default(autoincrement())
+  uuid          String            @unique @default(uuid())
+  kategoriId    Int               @map("kategori_id")
+  kode          String            @unique
+  nama          String
+  satuan        String
+  kategori      MasterKategori    @relation(fields: [kategoriId], references: [id])
+  koefisien     MasterKoefisien[] @relation("PekerjaanInduk")
+  komponenUntuk MasterKoefisien[] @relation("SubPekerjaan")
+  rabItems      RabItem[]
+
+  @@map("master_pekerjaan")
+}
+
+model MasterSumberDaya {
+  id         Int               @id @default(autoincrement())
+  uuid       String            @unique @default(uuid())
+  tipe       String            // tenaga | bahan | alat
+  kode       String            @unique
+  nama       String
+  satuan     String
+  koefisien  MasterKoefisien[]
+  hargaLokal HargaLokal[]
+
+  @@map("master_sumber_daya")
+}
+
+model MasterKoefisien {
+  id             Int               @id @default(autoincrement())
+  uuid           String            @unique @default(uuid())
+  pekerjaanId    Int               @map("pekerjaan_id")
+  sumberDayaId   Int?              @map("sumber_daya_id")
+  subPekerjaanId Int?              @map("sub_pekerjaan_id")
+  basisHarga     String            @default("final") @map("basis_harga") // final | direct
+  koefisien      Decimal           @db.Decimal(10, 4)
+  pekerjaan      MasterPekerjaan   @relation("PekerjaanInduk", fields: [pekerjaanId], references: [id], onDelete: Cascade)
+  sumberDaya     MasterSumberDaya? @relation(fields: [sumberDayaId], references: [id])
+  subPekerjaan   MasterPekerjaan?  @relation("SubPekerjaan", fields: [subPekerjaanId], references: [id])
+
+  @@map("master_koefisien")
+}
+
+model HargaLokal {
+  id           Int     @id @default(autoincrement())
+  uuid         String  @unique @default(uuid())
+  bumdesId     Int     @map("bumdes_id")
+  sumberDayaId Int     @map("sumber_daya_id")
+  tahun        Int
+  harga        Decimal @db.Decimal(18, 2)
+  bumdes       Bumdes           @relation(fields: [bumdesId], references: [id])
+  sumberDaya   MasterSumberDaya @relation(fields: [sumberDayaId], references: [id])
+  @@unique([bumdesId, sumberDayaId, tahun])
+  @@map("harga_lokal")
+}
+
+model RabProyek {
+  id             Int     @id @default(autoincrement())
+  uuid           String  @unique @default(uuid())
+  bumdesId       Int     @map("bumdes_id")
+  nomorDokumen   String  @unique @map("nomor_dokumen")
+  namaProyek     String  @map("nama_proyek")
+  tahun          Int
+  overheadPersen Decimal @default(10) @db.Decimal(5, 2) @map("overhead_persen")
+  ppnPersen      Decimal @default(0) @db.Decimal(5, 2) @map("ppn_persen")
+  status         String  @default("draft") // draft | final
+  bumdes         Bumdes  @relation(fields: [bumdesId], references: [id])
+  bab            RabBab[]
+  @@map("rab_proyek")
+}
+
+model RabBab {
+  id      Int    @id @default(autoincrement())
+  uuid    String @unique @default(uuid())
+  rabId   Int    @map("rab_id")
+  kode    String
+  namaBab String @map("nama_bab")
+  rab     RabProyek @relation(fields: [rabId], references: [id], onDelete: Cascade)
+  items   RabItem[]
+  @@map("rab_bab")
+}
+
+model RabItem {
+  id                  Int             @id @default(autoincrement())
+  uuid                String          @unique @default(uuid())
+  babId               Int             @map("bab_id")
+  pekerjaanId         Int             @map("pekerjaan_id")
+  volume              Decimal         @db.Decimal(14, 4) // dilebarkan dari (10,2) agar presisi volume terjaga
+  hargaSatuanTerkunci Decimal?        @db.Decimal(24, 6) @map("harga_satuan_terkunci")
+  totalHargaTerkunci  Decimal?        @db.Decimal(24, 6) @map("total_harga_terkunci")
+  bab                 RabBab          @relation(fields: [babId], references: [id], onDelete: Cascade)
+  pekerjaan           MasterPekerjaan @relation(fields: [pekerjaanId], references: [id])
+
+  @@map("rab_item")
+}
