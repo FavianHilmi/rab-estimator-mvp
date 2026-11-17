@@ -103,15 +103,15 @@ export default function Shell({ children, me }: ShellProps) {
         />
       )}
 
-      {/* Stable Sidebar (Design System 4.1 & 4.2) */}
+      {/* Stable Sticky Sidebar */}
       <aside
         className={cn(
-          'noprint fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card transition-transform duration-200 lg:static lg:translate-x-0',
+          'noprint fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-border px-6">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6">
           <Link href="/proyek" className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold shadow-sm">
               <FileText className="h-5 w-5" strokeWidth={2} />
@@ -167,7 +167,7 @@ export default function Shell({ children, me }: ShellProps) {
         </nav>
 
         {/* Footer: User profile, theme toggle & Logout */}
-        <div className="border-t border-border p-4 bg-muted/20">
+        <div className="shrink-0 border-t border-border p-4 bg-muted/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <Avatar className="h-8 w-8 rounded-md border border-border">
