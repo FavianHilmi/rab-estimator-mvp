@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const rawBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const BASE = rawBase.replace(/\/+$/, '');
 
 export async function api(path: string, opts: { method?: string; body?: unknown } = {}) {
   const token = localStorage.getItem('token');
