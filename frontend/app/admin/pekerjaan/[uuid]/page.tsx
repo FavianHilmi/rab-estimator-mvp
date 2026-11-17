@@ -155,7 +155,7 @@ export default function DetailPekerjaan() {
                   : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
               }
             >
-              {p.kategori?.pembulatan === 'none' ? 'Tidak dibulatkan' : 'Dipotong ke rupiah'}
+              {p.kategori?.pembulatan === 'none' ? 'Tanpa Pembulatan (Desimal)' : 'Bulat ke Bawah (Rupiah Utuh)'}
             </Badge>
           </div>
 

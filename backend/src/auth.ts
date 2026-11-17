@@ -22,6 +22,11 @@ export const CurrentUser = createParamDecorator((_: unknown, ctx: ExecutionConte
 export class AuthController {
   constructor(private db: PrismaService, private jwt: JwtService) {}
 
+  @Get('/')
+  health() {
+    return { status: 'ok', service: 'rab-mvp-backend' };
+  }
+
   @Post('auth/login')
   async login(@Body() b: { email: string; password: string }) {
     const u = await this.db.user.findUnique({ where: { email: String(b.email ?? '') }, include: { bumdes: true } });

@@ -837,7 +837,7 @@ export default function RabDetail() {
                               : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                           }
                         >
-                          {selectedPkItem.kategori?.pembulatan === 'none' ? 'Tidak dibulatkan' : 'Dipotong ke rupiah'}
+                          {selectedPkItem.kategori?.pembulatan === 'none' ? 'Tanpa Pembulatan (Desimal)' : 'Bulat ke Bawah (Rupiah Utuh)'}
                         </Badge>
                       </div>
 
