@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api, useMe } from '@/lib/api';
+import { useDebounce } from '@/lib/useDebounce';
 
 export default function HargaLokalPage() {
   const me = useMe();
@@ -30,6 +31,7 @@ export default function HargaLokalPage() {
   const [err, setErr] = React.useState('');
   const [saveSuccessMsg, setSaveSuccessMsg] = React.useState('');
   const [search, setSearch] = React.useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [filterStatus, setFilterStatus] = React.useState<'semua' | 'belum_diisi' | 'terisi'>('semua');
   const [filterTipe, setFilterTipe] = React.useState<'semua' | 'tenaga' | 'bahan' | 'alat'>('semua');
 
@@ -83,9 +85,11 @@ export default function HargaLokalPage() {
   const percentFilled = totalItems > 0 ? Math.round((filledItems / totalItems) * 100) : 0;
 
   const filteredRows = rows.filter((r) => {
+    const q = debouncedSearch.toLowerCase().trim();
     const matchSearch =
-      r.kode.toLowerCase().includes(search.toLowerCase()) ||
-      r.nama.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      r.kode.toLowerCase().includes(q) ||
+      r.nama.toLowerCase().includes(q);
 
     const isFilled = r.harga !== null && r.harga !== '';
     const matchStatus =

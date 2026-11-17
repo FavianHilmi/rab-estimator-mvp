@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { api, rp, useMe } from '@/lib/api';
+import { useDebounce } from '@/lib/useDebounce';
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
 
@@ -59,6 +60,7 @@ export default function RabDetail() {
   const [showItemModal, setShowItemModal] = React.useState(false);
   const [targetBabUuid, setTargetBabUuid] = React.useState<string>('');
   const [modalSearch, setModalSearch] = React.useState('');
+  const debouncedModalSearch = useDebounce(modalSearch, 300);
   const [modalKat, setModalKat] = React.useState<string>('semua');
   const [selectedPkUuid, setSelectedPkUuid] = React.useState<string>('');
   const [pkDetail, setPkDetail] = React.useState<any>(null);
@@ -224,10 +226,11 @@ export default function RabDetail() {
 
   // Filter list AHSP di panel kiri modal
   const filteredModalPk = pk.filter((p) => {
+    const q = debouncedModalSearch.toLowerCase().trim();
     const matchSearch =
-      !modalSearch ||
-      p.kode.toLowerCase().includes(modalSearch.toLowerCase()) ||
-      p.nama.toLowerCase().includes(modalSearch.toLowerCase());
+      !q ||
+      p.kode.toLowerCase().includes(q) ||
+      p.nama.toLowerCase().includes(q);
     const matchKat = modalKat === 'semua' || p.kategori?.uuid === modalKat;
     return matchSearch && matchKat;
   });

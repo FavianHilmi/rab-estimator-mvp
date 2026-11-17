@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api, useMe } from '@/lib/api';
+import { useDebounce } from '@/lib/useDebounce';
 
 export default function MasterPekerjaan() {
   const me = useMe();
@@ -26,13 +27,14 @@ export default function MasterPekerjaan() {
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState('');
   const [q, setQ] = React.useState('');
+  const debouncedQ = useDebounce(q, 300);
   const [fk, setFk] = React.useState({ kode: '', nama: '', pembulatan: 'down_0' });
   const [fp, setFp] = React.useState<any>({ kategoriUuid: '', kode: '', nama: '', satuan: '' });
 
   const load = () => {
     setLoading(true);
     Promise.all([
-      api(`/pekerjaan${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+      api(`/pekerjaan${debouncedQ ? `?q=${encodeURIComponent(debouncedQ)}` : ''}`),
       api('/kategori'),
     ])
       .then(([pRes, kRes]) => {
@@ -48,7 +50,7 @@ export default function MasterPekerjaan() {
 
   React.useEffect(() => {
     if (me) load();
-  }, [me, q]);
+  }, [me, debouncedQ]);
 
   if (!me) return null;
   if (me.role !== 'superadmin') {
@@ -124,8 +126,8 @@ export default function MasterPekerjaan() {
                           }
                         }}
                       >
-                        <option value="down_0">down_0 (Dipotong ke rupiah)</option>
-                        <option value="none">none (Tidak dibulatkan)</option>
+                        <option value="down_0">Bulat ke Bawah (Rupiah Utuh)</option>
+                        <option value="none">Tanpa Pembulatan (Desimal)</option>
                       </select>
                     </TableCell>
                     <TableCell className="text-center">
@@ -176,8 +178,8 @@ export default function MasterPekerjaan() {
                   value={fk.pembulatan}
                   onChange={(e) => setFk({ ...fk, pembulatan: e.target.value })}
                 >
-                  <option value="down_0">down_0 (Potong bawah)</option>
-                  <option value="none">none (Tanpa pembulatan)</option>
+                  <option value="down_0">Bulat ke Bawah (Rupiah Utuh)</option>
+                  <option value="none">Tanpa Pembulatan (Desimal)</option>
                 </select>
               </div>
 
@@ -334,7 +336,7 @@ export default function MasterPekerjaan() {
                             : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                         }
                       >
-                        {r.kategori?.pembulatan === 'none' ? 'Tidak dibulatkan' : 'Dipotong ke rupiah'}
+                        {r.kategori?.pembulatan === 'none' ? 'Tanpa Pembulatan' : 'Bulat ke Bawah (Rp)'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">

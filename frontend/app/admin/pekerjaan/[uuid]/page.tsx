@@ -513,7 +513,7 @@ export default function DetailPekerjaan() {
                             : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                         }
                       >
-                        {previewRes.pembulatan === 'down_0' ? 'Dipotong ke rupiah' : 'Tidak dibulatkan'}
+                        {previewRes.pembulatan === 'none' ? 'Tanpa Pembulatan' : 'Bulat ke Bawah (Rp)'}
                       </Badge>
                     </div>
                   </div>

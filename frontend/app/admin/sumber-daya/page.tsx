@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api, useMe } from '@/lib/api';
+import { useDebounce } from '@/lib/useDebounce';
 
 export default function SumberDayaPage() {
   const me = useMe();
@@ -24,6 +25,7 @@ export default function SumberDayaPage() {
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState('');
   const [search, setSearch] = React.useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [filterTipe, setFilterTipe] = React.useState<'semua' | 'tenaga' | 'bahan' | 'alat'>('semua');
   const [f, setF] = React.useState<any>({ tipe: 'bahan', kode: '', nama: '', satuan: '' });
 
@@ -62,9 +64,11 @@ export default function SumberDayaPage() {
   };
 
   const filteredRows = rows.filter((r) => {
+    const q = debouncedSearch.toLowerCase().trim();
     const matchSearch =
-      r.kode.toLowerCase().includes(search.toLowerCase()) ||
-      r.nama.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      r.kode.toLowerCase().includes(q) ||
+      r.nama.toLowerCase().includes(q);
 
     const matchTipe = filterTipe === 'semua' || r.tipe === filterTipe;
     return matchSearch && matchTipe;

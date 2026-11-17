@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api, useMe } from '@/lib/api';
+import { useDebounce } from '@/lib/useDebounce';
 
 export default function ProyekList() {
   const me = useMe();
@@ -42,6 +43,7 @@ export default function ProyekList() {
   const [creating, setCreating] = React.useState(false);
   const [err, setErr] = React.useState('');
   const [search, setSearch] = React.useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [filterStatus, setFilterStatus] = React.useState<'semua' | 'draft' | 'final'>('semua');
   const [modalOpen, setModalOpen] = React.useState(false);
   const [formErr, setFormErr] = React.useState('');
@@ -100,10 +102,12 @@ export default function ProyekList() {
   }
 
   const filteredRows = rows.filter((r) => {
+    const q = debouncedSearch.toLowerCase().trim();
     const matchSearch =
-      r.nomorDokumen.toLowerCase().includes(search.toLowerCase()) ||
-      r.namaProyek.toLowerCase().includes(search.toLowerCase()) ||
-      (r.bumdes?.nama && r.bumdes.nama.toLowerCase().includes(search.toLowerCase()));
+      !q ||
+      r.nomorDokumen.toLowerCase().includes(q) ||
+      r.namaProyek.toLowerCase().includes(q) ||
+      (r.bumdes?.nama && r.bumdes.nama.toLowerCase().includes(q));
 
     const matchStatus = filterStatus === 'semua' || r.status === filterStatus;
     return matchSearch && matchStatus;
