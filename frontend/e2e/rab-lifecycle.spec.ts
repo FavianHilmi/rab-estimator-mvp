@@ -26,6 +26,11 @@ test.describe('E2E RAB Desa: Skenario Fungsional & UI di Lingkungan Lokal', () =
 
     // Verifikasi profil pengguna di sidebar
     await expect(page.locator('aside').getByText('Operator Desa')).toBeVisible();
+
+    // 4. Verifikasi saat user sudah login dan kembali mengakses '/', langsung diarahkan ke /proyek (bukan form login)
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/proyek/);
+    await expect(page.getByRole('heading', { name: /Proyek RAB/i })).toBeVisible();
   });
 
   test('E2E-02: Pembuatan Proyek Baru via Modal Dialog & Verifikasi Debounce', async ({ page }) => {

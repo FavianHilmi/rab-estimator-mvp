@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { FileText, AlertCircle, Loader2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -9,11 +10,33 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Login() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = React.useState(true);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [err, setErr] = React.useState('');
   const [busy, setBusy] = React.useState(false);
+
+  // Jika user sudah memiliki sesi valid, langsung arahkan ke /proyek (tanpa kedip form)
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setCheckingAuth(false);
+      return;
+    }
+
+    api('/me')
+      .then((userData) => {
+        localStorage.setItem('user', JSON.stringify(userData));
+        router.replace('/proyek');
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setCheckingAuth(false);
+      });
+  }, [router]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,11 +46,27 @@ export default function Login() {
       const r = await api('/auth/login', { method: 'POST', body: { email, password } });
       localStorage.setItem('token', r.token);
       localStorage.setItem('user', JSON.stringify(r.user));
-      location.href = '/proyek';
+      router.replace('/proyek');
     } catch (x: any) {
       setErr(x.message || 'Gagal masuk. Periksa kembali email dan kata sandi Anda.');
       setBusy(false);
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background p-6">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+            <FileText className="h-6 w-6" strokeWidth={2} />
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span>Memeriksa sesi pengguna...</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

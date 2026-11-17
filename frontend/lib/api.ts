@@ -24,13 +24,62 @@ export const rp = (v: any, d = 2) => Number(v).toLocaleString('id-ID', { minimum
 export type Me = { nama: string; email?: string; role: 'superadmin' | 'operator' | 'viewer'; bumdes: { uuid: string; nama: string } | null };
 export type User = Me;
 
-/** Membaca pengguna dari localStorage; kembali ke halaman login bila belum masuk. */
+/** Membaca pengguna dan memverifikasi token dengan backend; kembali ke login bila sesi invalid. */
 export function useMe(): Me | null {
-  const [me, setMe] = useState<Me | null>(null);
-  useEffect(() => {
+  const [me, setMe] = useState<Me | null>(() => {
+    if (typeof window === 'undefined') return null;
     const u = localStorage.getItem('user');
-    if (!u || !localStorage.getItem('token')) location.href = '/';
-    else setMe(JSON.parse(u));
+    const token = localStorage.getItem('token');
+    if (!u || !token) return null;
+    try {
+      return JSON.parse(u);
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const u = localStorage.getItem('user');
+    if (!token || !u) {
+      location.href = '/';
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(u);
+      setMe(parsed);
+    } catch {
+      logout();
+      return;
+    }
+
+    // Verifikasi sesi aktif ke backend (/me)
+    let isMounted = true;
+    api('/me')
+      .then((serverMe: Me) => {
+        if (isMounted) {
+          setMe(serverMe);
+          localStorage.setItem('user', JSON.stringify(serverMe));
+        }
+      })
+      .catch(() => {
+        // Jika 401 atau error autentikasi, api() otomatis memanggil logout()
+      });
+
+    // Sinkronisasi sesi antar-tab: jika tab lain logout, tab ini otomatis logout
+    const handleStorage = (e: StorageEvent) => {
+      if ((e.key === 'token' || e.key === 'user') && !localStorage.getItem('token')) {
+        location.href = '/';
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
+
   return me;
 }
