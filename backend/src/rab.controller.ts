@@ -11,17 +11,64 @@ import { AuthUser, D, bumdesIdFor, canWrite, must, safe } from './util';
 export class HargaController {
   constructor(private db: PrismaService) {}
 
+  /** Daftar tahun yang sudah memiliki data harga lokal untuk BUMDes terpilih (terbaru lebih dulu). */
+  @Get('tahun')
+  async tahunTersedia(@CurrentUser() u: AuthUser, @Query('bumdesUuid') bumdesUuid?: string) {
+    const bumdesId = await bumdesIdFor(this.db, u, bumdesUuid);
+    const rows = await this.db.hargaLokal.groupBy({ by: ['tahun'], where: { bumdesId }, orderBy: { tahun: 'desc' } });
+    return rows.map((r) => r.tahun);
+  }
+
+  /** Salin seluruh harga dari satu tahun ke tahun baru. Harga yang sudah ada di tahun tujuan tidak ditimpa. */
+  @Post('salin')
+  async salin(@CurrentUser() u: AuthUser, @Body() b: any) {
+    canWrite(u); must(b, 'dariTahun', 'keTahun');
+    const dari = Number(b.dariTahun);
+    const ke = Number(b.keTahun);
+    const valid = (t: number) => Number.isInteger(t) && t >= 2000 && t <= 2100;
+    if (!valid(dari) || !valid(ke)) throw new BadRequestException('Tahun tidak valid (2000-2100)');
+    if (dari === ke) throw new BadRequestException('Tahun asal dan tujuan tidak boleh sama');
+    const bumdesId = await bumdesIdFor(this.db, u, b.bumdesUuid);
+    const sumber = await this.db.hargaLokal.findMany({ where: { bumdesId, tahun: dari } });
+    if (!sumber.length) throw new BadRequestException(`Tidak ada harga lokal pada tahun ${dari} untuk disalin`);
+    const res = await this.db.hargaLokal.createMany({
+      data: sumber.map((s) => ({ bumdesId, sumberDayaId: s.sumberDayaId, tahun: ke, harga: s.harga })),
+      skipDuplicates: true,
+    });
+    return { ok: true, disalin: res.count, dariTahun: dari, keTahun: ke };
+  }
+
   @Get()
-  async list(@CurrentUser() u: AuthUser, @Query('tahun') tahun: string, @Query('bumdesUuid') bumdesUuid?: string) {
+  async list(
+    @CurrentUser() u: AuthUser,
+    @Query('tahun') tahun: string,
+    @Query('bandingkanTahun') bandingkanTahun?: string,
+    @Query('bumdesUuid') bumdesUuid?: string
+  ) {
     const bumdesId = await bumdesIdFor(this.db, u, bumdesUuid);
     const t = Number(tahun) || new Date().getFullYear();
-    const [sd, harga] = await Promise.all([
+    const tLalu = bandingkanTahun ? Number(bandingkanTahun) : null;
+
+    const [sd, harga, hargaLalu] = await Promise.all([
       this.db.masterSumberDaya.findMany({ orderBy: [{ tipe: 'asc' }, { kode: 'asc' }] }),
       this.db.hargaLokal.findMany({ where: { bumdesId, tahun: t } }),
+      tLalu ? this.db.hargaLokal.findMany({ where: { bumdesId, tahun: tLalu } }) : Promise.resolve([]),
     ]);
     const map: Record<number, string> = {};
     for (const h of harga) map[h.sumberDayaId] = h.harga.toString();
-    return sd.map((s) => ({ uuid: s.uuid, kode: s.kode, nama: s.nama, tipe: s.tipe, satuan: s.satuan, harga: map[s.id] ?? null }));
+
+    const mapLalu: Record<number, string> = {};
+    for (const h of hargaLalu) mapLalu[h.sumberDayaId] = h.harga.toString();
+
+    return sd.map((s) => ({
+      uuid: s.uuid,
+      kode: s.kode,
+      nama: s.nama,
+      tipe: s.tipe,
+      satuan: s.satuan,
+      harga: map[s.id] ?? null,
+      hargaLalu: tLalu ? (mapLalu[s.id] ?? null) : undefined,
+    }));
   }
 
   @Put(':sdUuid')
