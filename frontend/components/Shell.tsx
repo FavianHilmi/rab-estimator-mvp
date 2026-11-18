@@ -40,25 +40,66 @@ export default function Shell({ children, me }: ShellProps) {
   const [isDark, setIsDark] = React.useState(false);
 
   React.useEffect(() => {
-    const isDarkStored = localStorage.getItem('theme') === 'dark';
+    const isDarkStored =
+      localStorage.getItem('theme') === 'dark' ||
+      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setIsDark(isDarkStored);
-    if (isDarkStored) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, []);
 
-  const toggleTheme = () => {
-    const nextDark = !isDark;
-    setIsDark(nextDark);
-    if (nextDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+  const toggleTheme = (e?: React.MouseEvent) => {
+    const isAppearanceTransition =
+      typeof document !== 'undefined' &&
+      'startViewTransition' in document &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const applyTheme = () => {
+      const nextDark = !isDark;
+      setIsDark(nextDark);
+      if (nextDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    };
+
+    if (!isAppearanceTransition) {
+      applyTheme();
+      return;
     }
+
+    // Ambil koordinat klik mouse atau posisi tengah layar sebagai acuan pusat lingkaran
+    const x = e?.clientX ?? window.innerWidth / 2;
+    const y = e?.clientY ?? window.innerHeight / 2;
+
+    // Hitung radius terjauh dari titik klik ke sudut layar terluar
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    const transition = (document as any).startViewTransition(async () => {
+      applyTheme();
+    });
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+
+      document.documentElement.animate(
+        {
+          clipPath,
+        },
+        {
+          duration: 380,
+          easing: 'ease-in-out',
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+    });
   };
 
   const navItems = [
@@ -184,12 +225,16 @@ export default function Shell({ children, me }: ShellProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={toggleTheme}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={(e) => toggleTheme(e)}
               aria-label="Ganti mode terang/gelap"
               title="Ganti mode terang/gelap"
             >
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {isDark ? (
+                <Sun className="h-4 w-4 transition-transform duration-300 hover:rotate-45 text-amber-500" />
+              ) : (
+                <Moon className="h-4 w-4 transition-transform duration-300 hover:-rotate-12" />
+              )}
             </Button>
           </div>
 
@@ -240,10 +285,10 @@ export default function Shell({ children, me }: ShellProps) {
                   <p className="text-xs text-muted-foreground font-normal">{me.email ?? '-'}</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={toggleTheme}>
+                <DropdownMenuItem onClick={(e) => toggleTheme(e)}>
                   {isDark ? (
                     <>
-                      <Sun className="h-4 w-4 mr-2" /> Tema Terang
+                      <Sun className="h-4 w-4 mr-2 text-amber-500" /> Tema Terang
                     </>
                   ) : (
                     <>
